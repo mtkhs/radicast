@@ -77,7 +77,7 @@ func (r *RadikoProg) Duration() (int64, error) {
 }
 
 type RadikoResult struct {
-	Mp3Path string
+	M4aPath string
 	Prog    *RadikoProg
 	Station string
 }
@@ -89,10 +89,10 @@ func (r *RadikoResult) Save(dir string) error {
 		return err
 	}
 
-	mp3Path := filepath.Join(programDir, "podcast.mp3")
+	m4aPath := filepath.Join(programDir, "podcast.m4a")
 	xmlPath := filepath.Join(programDir, "podcast.xml")
 
-	if err := RenameOrCopy(r.Mp3Path, mp3Path); err != nil {
+	if err := RenameOrCopy(r.M4aPath, m4aPath); err != nil {
 		return err
 	}
 
@@ -110,7 +110,7 @@ func (r *RadikoResult) Save(dir string) error {
 		return err
 	}
 
-	r.Log("saved mp3:", mp3Path, " xml:", xmlPath)
+	r.Log("saved m4a:", m4aPath, " xml:", xmlPath)
 
 	return nil
 }
@@ -157,7 +157,7 @@ func (r *Radiko) run(ctx context.Context) []*RadikoResult {
 	results := []*RadikoResult{}
 
 	record := func() error {
-		output := filepath.Join(r.TempDir, fmt.Sprintf("radiko_%d.mp3", retry))
+		output := filepath.Join(r.TempDir, fmt.Sprintf("radiko_%d.m4a", retry))
 
 		ret, err := r.record(ctx, output, r.Station, r.Bitrate, r.Buffer)
 
@@ -197,8 +197,8 @@ func (r *Radiko) run(ctx context.Context) []*RadikoResult {
 
 			// TODO stop if recod program is changed.
 			r.Log("got err:", err)
-			if retry < 5 {
-				sec := time.Second * 10
+			if retry < 10 {
+				sec := time.Second * 2
 				time.AfterFunc(sec, func() {
 					c <- struct{}{}
 				})
@@ -213,11 +213,11 @@ func (r *Radiko) run(ctx context.Context) []*RadikoResult {
 
 // http://superuser.com/questions/314239/how-to-join-merge-many-mp3-files
 func (r *Radiko) ConcatOutput(dir string, results []*RadikoResult) (*RadikoResult, error) {
-	output := filepath.Join(dir, "radiko_concat.mp3")
+	output := filepath.Join(dir, "radiko_concat.m4a")
 
 	outputs := []string{}
 	for _, result := range results {
-		outputs = append(outputs, result.Mp3Path)
+		outputs = append(outputs, result.M4aPath)
 	}
 
 	args := []string{
@@ -236,7 +236,7 @@ func (r *Radiko) ConcatOutput(dir string, results []*RadikoResult) (*RadikoResul
 	}
 
 	return &RadikoResult{
-		Mp3Path: output,
+		M4aPath: output,
 		Station: results[0].Station,
 		Prog:    results[0].Prog,
 	}, nil
@@ -365,7 +365,7 @@ func (r *Radiko) record(ctx context.Context, output string, station string, bitr
 	}
 
 	ret := &RadikoResult{
-		Mp3Path: output,
+		M4aPath: output,
 		Station: station,
 		Prog:    prog,
 	}
@@ -513,7 +513,7 @@ func (r *Radiko) auth(ctx context.Context) (string, string, error) {
 
 	req.Header.Set("pragma", "no-cache")
 	req.Header.Set("X-Radiko-App", "pc_ts")
-	req.Header.Set("X-Radiko-App-Version", "4.0.0")
+	req.Header.Set("X-Radiko-App-Version", "4.0.1")
 	req.Header.Set("X-Radiko-User", "test-stream")
 	req.Header.Set("X-Radiko-Device", "pc")
 
@@ -577,7 +577,7 @@ func (r *Radiko) auth(ctx context.Context) (string, string, error) {
 
 	req.Header.Set("pragma", "no-cache")
 	req.Header.Set("X-Radiko-App", "pc_ts")
-	req.Header.Set("X-Radiko-App-Version", "4.0.0")
+	req.Header.Set("X-Radiko-App-Version", "4.0.1")
 	req.Header.Set("X-Radiko-User", "test-stream")
 	req.Header.Set("X-Radiko-Device", "pc")
 	req.Header.Set("X-Radiko-Authtoken", authtoken)

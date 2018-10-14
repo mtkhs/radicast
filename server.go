@@ -37,12 +37,12 @@ func (s *Server) Run() error {
 
 	router := mux.NewRouter()
 
-	router.HandleFunc("/podcast/{program}.mp3", s.errorHandler(func(w http.ResponseWriter, r *http.Request) error {
+	router.HandleFunc("/podcast/{program}.m4a", s.errorHandler(func(w http.ResponseWriter, r *http.Request) error {
 		dir := mux.Vars(r)["program"]
 
-		mp3Path, mp3Stat, err := s.mp3Path(dir)
+		m4aPath, m4aStat, err := s.m4aPath(dir)
 
-		if _, err := os.Stat(mp3Path); err != nil {
+		if _, err := os.Stat(m4aPath); err != nil {
 			http.NotFound(w, r)
 			return nil
 		}
@@ -54,7 +54,7 @@ func (s *Server) Run() error {
 			return nil
 		}
 
-		f, err := os.Open(mp3Path)
+		f, err := os.Open(m4aPath)
 
 		if err != nil {
 			return err
@@ -62,7 +62,7 @@ func (s *Server) Run() error {
 
 		defer f.Close()
 
-		http.ServeContent(w, r, mp3Stat.Name(), mp3Stat.ModTime(), f)
+		http.ServeContent(w, r, m4aStat.Name(), m4aStat.ModTime(), f)
 		return nil
 	}))
 
@@ -140,7 +140,7 @@ func (s *Server) rss(baseUrl *url.URL) (*PodcastRss, error) {
 
 func (s *Server) itemByDir(dir string, baseUrl *url.URL) (*PodcastItem, error) {
 
-	_, mp3Stat, err := s.mp3Path(dir)
+	_, m4aStat, err := s.m4aPath(dir)
 
 	if err != nil {
 		return nil, err
@@ -167,7 +167,7 @@ func (s *Server) itemByDir(dir string, baseUrl *url.URL) (*PodcastItem, error) {
 		return nil, err
 	}
 
-	u, err := url.Parse("/podcast/" + dir + ".mp3")
+	u, err := url.Parse("/podcast/" + dir + ".m4a")
 
 	if err != nil {
 		return nil, err
@@ -182,15 +182,15 @@ func (s *Server) itemByDir(dir string, baseUrl *url.URL) (*PodcastItem, error) {
 	item.ITunesSummary = prog.Info
 
 	item.Enclosure.Url = baseUrl.ResolveReference(u).String()
-	item.Enclosure.Type = "audio/mpeg"
-	item.Enclosure.Length = int(mp3Stat.Size())
-	item.PubDate = PubDate{mp3Stat.ModTime()}
+	item.Enclosure.Type = "audio/aac"
+	item.Enclosure.Length = int(m4aStat.Size())
+	item.PubDate = PubDate{m4aStat.ModTime()}
 
 	return &item, nil
 }
 
-func (s *Server) mp3Path(dir string) (string, os.FileInfo, error) {
-	return s.pathStat(dir, "podcast.mp3")
+func (s *Server) m4aPath(dir string) (string, os.FileInfo, error) {
+	return s.pathStat(dir, "podcast.m4a")
 }
 
 func (s *Server) xmlPath(dir string) (string, os.FileInfo, error) {

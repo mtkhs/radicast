@@ -34,10 +34,7 @@ func newFfmpegCmd(ffmpeg, bitrate, output string) *exec.Cmd {
 		"-y",
 		"-i", "-",
 		"-vn",
-		"-acodec", "libmp3lame",
-		"-ar", "44100",
-		"-ab", bitrate,
-		"-ac", "2",
+		"-acodec", "copy",
 		output,
 	)
 }
@@ -48,10 +45,7 @@ func newAvconvCmd(avconv, bitrate, output string) *exec.Cmd {
 		"-y",
 		"-i", "-",
 		"-vn",
-		"-c:a", "libmp3lame",
-		"-ar", "44100",
-		"-b:a", bitrate,
-		"-ac", "2",
+		"-c:a", "copy",
 		output,
 	)
 }

@@ -18,7 +18,7 @@ ENV GOROOT /goroot
 ENV GOPATH /gopath
 ENV PATH $PATH:$GOROOT/bin:$GOPATH/bin
 
-RUN go get -v github.com/soh335/radicast
+RUN go get -v github.com/tkhs/radicast
 
 ENTRYPOINT ["radicast"]
 CMD ["--help"]
