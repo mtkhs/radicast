@@ -42,6 +42,8 @@ type PodcastChannel struct {
 type PodcastItem struct {
 	XMLName        xml.Name `xml:"item"`
 	Title          string   `xml:"title,omitempty"`
+	Description    string   `xml:"description,omitempty"`
+	Category       string   `xml:"category,omitempty"`
 	ITunesAuthor   string   `xml:"itunes:author,omitempty"`
 	ITunesSubtitle string   `xml:"itunes:subtitle,omitempty"`
 	ITunesSummary  string   `xml:"itunes:summary,omitempty"`

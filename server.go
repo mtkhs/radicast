@@ -102,6 +102,33 @@ func (s *Server) Run() error {
 		return nil
 	}))
 
+	router.HandleFunc("/podcast/{program}.{ext:png|jpg}", s.errorHandler(func(w http.ResponseWriter, r *http.Request) error {
+		dir := mux.Vars(r)["program"]
+		ext := mux.Vars(r)["ext"]
+
+		imgPath, _, err := s.imgPath(dir, ext)
+
+		if _, err := os.Stat(imgPath); err != nil {
+			http.NotFound(w, r)
+			return nil
+		}
+
+		if err != nil {
+			return err
+		}
+
+		http.ServeFile(w, r, imgPath)
+
+		return nil
+	}))
+
+	router.HandleFunc("/radicast.png", s.errorHandler(func(w http.ResponseWriter, r *http.Request) error {
+
+		http.ServeFile(w, r, filepath.Join(s.Output, "radicast.png"))
+
+		return nil
+	}))
+
 	return http.ListenAndServe(s.Addr, router)
 }
 
@@ -138,6 +165,7 @@ func (s *Server) rss(baseUrl *url.URL) (*PodcastRss, error) {
 	channel.Title = s.Title
 	channel.Items = items
 
+	channel.ITunesCategory.Text = "radiko"
 	channel.ITunesImage.Href = baseUrl.String() + "/radicast.png"
 
 	rss.Channel = channel
@@ -193,6 +221,16 @@ func (s *Server) itemByDir(dir string, baseUrl *url.URL) (*PodcastItem, error) {
 	item.Enclosure.Length = int(m4aStat.Size())
 	item.PubDate = PubDate{m4aStat.ModTime()}
 
+	item.Description = prog.Desc
+	item.Category = "radiko"
+
+	ext := filepath.Ext(prog.Img)
+	iu, err := url.Parse("/podcast/" + dir + ext)
+	if err != nil {
+		return nil, err
+	}
+	item.ITunesImage.Href = baseUrl.ResolveReference(iu).String()
+
 	return &item, nil
 }
 
@@ -202,6 +240,10 @@ func (s *Server) m4aPath(dir string) (string, os.FileInfo, error) {
 
 func (s *Server) xmlPath(dir string) (string, os.FileInfo, error) {
 	return s.pathStat(dir, "podcast.xml")
+}
+
+func (s *Server) imgPath(dir string, ext string) (string, os.FileInfo, error) {
+	return s.pathStat(dir, "podcast." + ext)
 }
 
 func (s *Server) pathStat(dir string, name string) (string, os.FileInfo, error) {

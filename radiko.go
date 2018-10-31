@@ -47,6 +47,8 @@ type RadikoPrograms struct {
 
 type RadikoProg struct {
 	XMLName  xml.Name `xml:"prog"`
+	Id       string   `xml:"id,attr"`
+	MasterId string   `xml:"master_id,attr"`
 	Ft       string   `xml:"ft,attr"`
 	To       string   `xml:"to,attr"`
 	Ftl      string   `xml:"ftl,attr"`
@@ -58,6 +60,7 @@ type RadikoProg struct {
 	Desc     string   `xml:"desc"`
 	Info     string   `xml:"info"`
 	Url      string   `xml:"url"`
+	Img      string   `xml:"img"`
 }
 
 func (r *RadikoProg) FtTime() (time.Time, error) {
@@ -92,7 +95,14 @@ func (r *RadikoResult) Save(dir string) error {
 	m4aPath := filepath.Join(programDir, "podcast.m4a")
 	xmlPath := filepath.Join(programDir, "podcast.xml")
 
+	imgName := "podcast" + filepath.Ext(r.Prog.Img)
+	imgPath := filepath.Join(programDir, imgName)
+
 	if err := RenameOrCopy(r.M4aPath, m4aPath); err != nil {
+		return err
+	}
+
+	if err := RenameOrCopy(filepath.Dir(r.M4aPath) + "/" + imgName, imgPath); err != nil {
 		return err
 	}
 
@@ -110,7 +120,7 @@ func (r *RadikoResult) Save(dir string) error {
 		return err
 	}
 
-	r.Log("saved m4a:", m4aPath, " xml:", xmlPath)
+    r.Log("saved m4a:", m4aPath, " xml:", xmlPath, " img:", imgPath)
 
 	return nil
 }
@@ -263,16 +273,23 @@ func (r *Radiko) StationList(ctx context.Context) ([]string, error) {
 }
 
 func (r *Radiko) todayPrograms(ctx context.Context, area string) (*RadikoPrograms, error) {
-	u, err := url.Parse("http://radiko.jp/v2/api/program/today")
+
+	const layoutDate = "20060102"
+	const layoutTime = "150405"
+
+	timeNow := time.Now()
+	nowTime := timeNow.Format(layoutTime)
+	tmpDate := timeNow
+
+	if nowTime >= "000000" && nowTime < "050000" {
+		tmpDate = timeNow.AddDate(0, 0, -1)
+	}
+
+	u, err := url.Parse("http://radiko.jp/v3/program/date/" + tmpDate.Format(layoutDate) + "/" + area + ".xml")
 
 	if err != nil {
 		return nil, err
 	}
-
-	v := u.Query()
-	v.Set("area_id", area)
-
-	u.RawQuery = v.Encode()
 
 	req, err := http.NewRequest("GET", u.String(), nil)
 
@@ -346,6 +363,21 @@ func (r *Radiko) record(ctx context.Context, output string, station string, bitr
 
 	if err != nil {
 		return nil, err
+	}
+
+	r.Log("Get Img ", prog.Img)
+
+	img, err := http.Get(prog.Img)
+	if err == nil {
+		defer img.Body.Close()
+
+		file, err := os.Create(filepath.Dir(output) + "/podcast" + filepath.Ext(prog.Img))
+		if err == nil {
+			defer file.Close()
+
+			io.Copy(file, img.Body)
+
+		}
 	}
 
 	r.Log("start recording ", prog.Title)
