@@ -97,6 +97,11 @@ func (s *Server) Run() error {
 		return nil
 	}))
 
+	router.HandleFunc( "/radicast.png", s.errorHandler( func( w http.ResponseWriter, r *http.Request ) error {
+		http.ServeFile( w, r, filepath.Join( s.Output, "radicast.png" ) )
+		return nil
+	}))
+
 	return http.ListenAndServe(s.Addr, router)
 }
 
@@ -132,6 +137,8 @@ func (s *Server) rss(baseUrl *url.URL) (*PodcastRss, error) {
 	channel := PodcastChannel{}
 	channel.Title = s.Title
 	channel.Items = items
+
+	channel.ITunesImage.Href = baseUrl.String() + "/radicast.png"
 
 	rss.Channel = channel
 
