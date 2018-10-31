@@ -1,21 +1,21 @@
-FROM ubuntu:trusty
-MAINTAINER tkhs
+FROM alpine:3.8
 
-ENV GOROOT /goroot
-ENV GOPATH /gopath
-ENV PATH $PATH:$GOROOT/bin:$GOPATH/bin
+ENV GOROOT /usr/lib/go
+ENV GOPATH /go
+ENV PATH $GOROOT/bin:$GOPATH/bin:$PATH
+ENV TZ='Asia/Tokyo'
 
-RUN echo "Asia/Tokyo\n" > /etc/timezone && dpkg-reconfigure --frontend noninteractive tzdata \
-    && apt-get update && apt-get install -y \
-        ntp \
-        curl \
-        libav-tools \
-        rtmpdump \
-        swftools \
-        git \
-# http://blog.gopheracademy.com/advent-2014/easy-deployment/
-    && mkdir /goroot && curl https://storage.googleapis.com/golang/go1.7.1.linux-amd64.tar.gz | tar xvzf - -C /goroot --strip-components=1 \
-    && go get -v github.com/tkhs/radicast
+RUN apk add --update --no-cache --virtual=build-dependencies build-base go git zlib-dev curl \
+    && apk add --update --no-cache bash ca-certificates tzdata rtmpdump ffmpeg \
+    && curl http://www.swftools.org/swftools-0.9.2.tar.gz | tar xz -C /tmp \
+    && cd /tmp/swftools-0.9.2 && ./configure && make \
+    && mv /tmp/swftools-0.9.2/src/swfextract /usr/local/bin/ \
+    && go get -v github.com/tkhs/radicast \
+    && apk update \
+    && apk del --update build-dependencies \
+    && rm -r /tmp/swftools-0.9.2 \
+    && rm -r /root/.cache
 
-ENTRYPOINT ["radicast"]
-CMD ["--help"]
+ENTRYPOINT [ "radicast" ]
+CMD [ "--help" ]
+
