@@ -35,12 +35,10 @@ type RadikoPrograms struct {
 		Station []struct {
 			Id   string `xml:"id,attr"`
 			Name string `xml:"name"`
-			Scd  struct {
-				Progs struct {
-					Date string       `xml:"date"`
-					Prog []RadikoProg `xml:"prog"`
-				} `xml:"progs"`
-			} `xml:"scd"`
+			Progs struct {
+				Date string       `xml:"date"`
+				Prog []RadikoProg `xml:"prog"`
+			} `xml:"progs"`
 		} `xml:"station"`
 	} `xml:"stations"`
 }
@@ -327,8 +325,10 @@ func (r *Radiko) nowProgram(ctx context.Context, area string, station string) (*
 	}
 
 	for _, s := range progs.Stations.Station {
+		r.Log( "s.Id", s.Id )
+		r.Log( "station", station )
 		if s.Id == station {
-			for _, prog := range s.Scd.Progs.Prog {
+			for _, prog := range s.Progs.Prog {
 				ft, err := prog.FtTime()
 				if err != nil {
 					return nil, err
