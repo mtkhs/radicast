@@ -1,4 +1,10 @@
-[![wercker status](https://app.wercker.com/status/6a50ede5efd0abd5b078ab080fe7b61c/s/master "wercker status")](https://app.wercker.com/project/bykey/6a50ede5efd0abd5b078ab080fe7b61c)
+# フォーク版の変更点など
+
+* forked from [soh335/radicast](https://github.com/soh335/radicast)
+* こちらを参考に変更点を取り込み：https://omiso46.blogspot.com/2018/05/raspberrypi-radiko-podcast_23.html
+* DockerイメージをAlpine化
+* [Docker Hub](https://hub.docker.com/r/mtkhs/radicast/)
+
 # radicast
 
 * record radiko
@@ -14,7 +20,7 @@
 ## INSTALL
 
 ```
-$ go get github.com/soh335/radicast
+$ go get github.com/tkhs/radicast
 ```
 
 ## USAGE
@@ -56,12 +62,12 @@ $ curl 127.0.0.1:3355/rss # podcast rss
 ```
 $ mkdir workspace
 $ cd workspace
-$ docker pull soh335/radicast
-$ docker run --rm soh335/radicast:latest --setup > config.json
-$ docker run --rm -p 3355:3355 -v `pwd`:/workspace soh335/radicast:latest --config /workspace/config.json --output /workspace/output
+$ docker pull mtkhs/radicast
+$ docker run --rm mtkhs/radicast:latest --setup > config.json
+$ docker run --rm -p 3355:3355 -v `pwd`:/workspace mtkhs/radicast:latest --config /workspace/config.json --output /workspace/output
 ```
 
-* [docker-hub](https://registry.hub.docker.com/u/soh335/radicast/)
+* [docker-hub](https://hub.docker.com/r/mtkhs/radicast/)
 
 ## SEE ALSO
 
