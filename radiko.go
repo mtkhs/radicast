@@ -325,8 +325,6 @@ func (r *Radiko) nowProgram(ctx context.Context, area string, station string) (*
 	}
 
 	for _, s := range progs.Stations.Station {
-		r.Log( "s.Id", s.Id )
-		r.Log( "station", station )
 		if s.Id == station {
 			for _, prog := range s.Progs.Prog {
 				ft, err := prog.FtTime()
