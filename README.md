@@ -14,9 +14,7 @@
 
 ## REQUIRE
 
-* rtmpdump
-* swftools
-* ffmpeg or avconv
+* ffmpeg
 * or docker (see docker section)
 
 ## INSTALL
@@ -74,6 +72,7 @@ $ docker run --rm -p 3355:3355 -v `pwd`:/workspace mtkhs/radicast:latest --confi
 ## SEE ALSO
 
 * [ripdiko](https://github.com/miyagawa/ripdiko)
+* [rec_radiko.sh](https://gist.github.com/matchy2/3956266)
 
 ## LICENSE
 
