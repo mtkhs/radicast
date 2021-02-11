@@ -4,6 +4,7 @@
 * こちらを参考に変更点を取り込み：https://omiso46.blogspot.com/2018/05/raspberrypi-radiko-podcast_23.html
 * Docker イメージを Alpine 化 (x86_64)
 * partial key の取得方法の変更に伴う修正 from [kojisano/radicast](https://github.com/kojisano/radicast)
+* rtmpdump と Flash の対応を削除して HLS 配信の録音に対応
 * [Docker Hub](https://hub.docker.com/r/mtkhs/radicast/)
 
 # radicast

@@ -27,8 +27,7 @@ import (
 
 const (
 	radikoTimeLayout = "20060102150405"
-	playerUrl        = "http://radiko.jp/apps/js/flash/myplayer-release.swf"
-	auth_key         = "bcd151073c03b352e1ef2fd66c32209da9ca0afa"
+	auth_key	 = "bcd151073c03b352e1ef2fd66c32209da9ca0afa"
 )
 
 type RadikoPrograms struct {
@@ -406,55 +405,31 @@ func (r *Radiko) record(ctx context.Context, output string, station string, bitr
 
 func (r *Radiko) download(ctx context.Context, authtoken string, station string, sec string, bitrate string, output string) error {
 
-	rtmpdump, err := exec.LookPath("rtmpdump")
+	ffmpeg, err := exec.LookPath("ffmpeg")
 
 	if err != nil {
 		return err
 	}
 
-	rtmpdumpCmd := exec.Command(rtmpdump,
-		"--live",
-		"--quiet",
-		"-r", "rtmpe://f-radiko.smartstream.ne.jp",
-		"--playpath", "simul-stream.stream",
-		"--app", station+"/_definst_",
-		"-W", playerUrl,
-		"-C", `S:""`, "-C", `S:""`, "-C", `S:""`, "-C", "S:"+authtoken,
-		"--stop", sec,
-		"-o", "-",
+	ffmpegCmd := exec.Command(ffmpeg,
+                "-loglevel", "error",
+		"-fflags", "+discardcorrupt",
+		"-headers", "X-Radiko-Authtoken:" + authtoken,
+		"-i", "http://f-radiko.smartstream.ne.jp/" + station + "/_definst_/simul-stream.stream/playlist.m3u8",
+		"-acodec", "copy",
+		"-vn",
+		"-bsf:a", "aac_adtstoasc",
+		"-y",
+		"-t", sec,
+		output,
 	)
 
-	converterCmd, err := newConverterCmd(r.Converter, bitrate, output)
-
-	if err != nil {
-		return err
-	}
-
-	r.Log("rtmpdump command: ", strings.Join(rtmpdumpCmd.Args, " "))
-	r.Log("converter command: ", strings.Join(converterCmd.Args, " "))
-
-	pipe, err := rtmpdumpCmd.StdoutPipe()
-
-	if err != nil {
-		return err
-	}
-
-	converterCmd.Stdin = pipe
+	r.Log("ffmpeg command: ", strings.Join(ffmpegCmd.Args, " "))
 
 	errChan := make(chan error)
 	go func() {
 
-		if err := converterCmd.Start(); err != nil {
-			errChan <- err
-			return
-		}
-
-		if err := rtmpdumpCmd.Run(); err != nil {
-			errChan <- err
-			return
-		}
-
-		if err := converterCmd.Wait(); err != nil {
+		if err := ffmpegCmd.Run(); err != nil {
 			errChan <- err
 			return
 		}
@@ -464,7 +439,7 @@ func (r *Radiko) download(ctx context.Context, authtoken string, station string,
 
 	select {
 	case <-ctx.Done():
-		rtmpdumpCmd.Process.Kill()
+		ffmpegCmd.Process.Kill()
 		err := <-errChan
 		if err == nil {
 			err = ctx.Err()
@@ -479,64 +454,7 @@ func (r *Radiko) download(ctx context.Context, authtoken string, station string,
 
 // return authtoken, area, err
 func (r *Radiko) auth(ctx context.Context) (string, string, error) {
-	req, err := http.NewRequest("GET", playerUrl, nil)
-
-	if err != nil {
-		return "", "", err
-	}
-
-	tmpSwfFile, err := ioutil.TempFile("", "swf")
-
-	if err != nil {
-		return "", "", err
-	}
-
-	defer func() {
-		tmpSwfFile.Close()
-		os.Remove(tmpSwfFile.Name())
-	}()
-
-	err = r.httpDo(ctx, req, func(resp *http.Response, err error) error {
-		if err != nil {
-			return err
-		}
-
-		defer resp.Body.Close()
-
-		if _, err := io.Copy(tmpSwfFile, resp.Body); err != nil {
-			return err
-		}
-
-		return nil
-	})
-
-	if err != nil {
-		return "", "", err
-	}
-
-	swfextract, err := exec.LookPath("swfextract")
-
-	if err != nil {
-		return "", "", err
-	}
-
-	tmpAuthKeyPngFile, err := ioutil.TempFile("", ".png")
-
-	if err != nil {
-		return "", "", err
-	}
-
-	defer func() {
-		tmpAuthKeyPngFile.Close()
-		os.Remove(tmpAuthKeyPngFile.Name())
-	}()
-
-	swfextractCmd := exec.Command(swfextract, "-b", "12", tmpSwfFile.Name(), "-o", tmpAuthKeyPngFile.Name())
-	if err := swfextractCmd.Run(); err != nil {
-		return "", "", err
-	}
-
-	req, err = http.NewRequest("GET", "https://radiko.jp/v2/api/auth1", nil)
+	req, err := http.NewRequest("GET", "https://radiko.jp/v2/api/auth1", nil)
 
 	if err != nil {
 		return "", "", err
